@@ -2,11 +2,11 @@ import pg from 'pg';
 
 var conString = process.env.DATABASE_URL;
 
-function query(qs) {
+function query(qs, values) {
   return new Promise((resolve, reject) => (
     pg.connect(conString, (err, client, done) => {
       if (err) return reject(new Error(err));
-      client.query(qs, (err, result) => {
+      client.query(qs, values, (err, result) => {
         if (err) {
           done();
           return reject(new Error(err));
@@ -16,13 +16,6 @@ function query(qs) {
       });
     })
   ));
-}
-
-function normalizeValue(value) {
-  if (typeof value === 'string') {
-    return `'${value}'`;
-  }
-  return value;
 }
 
 function all(table) {
@@ -35,23 +28,26 @@ function clear(table) {
 
 function create(table, params) {
   const assigns = Object.keys(params);
-  const values = Object.values(params).map((value) => normalizeValue(value));
-  return query(`INSERT INTO ${table} (${assigns}) VALUES (${values}) RETURNING *`);
+  const values = Object.values(params);
+  const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
+  return query(`INSERT INTO ${table} (${assigns}) VALUES (${placeholders}) RETURNING *`, values);
 }
 
 function getById(table, id) {
-  return query(`SELECT * FROM ${table} WHERE id=${id}`);
+  return query(`SELECT * FROM ${table} WHERE id=$1`, [id]);
 }
 
 function update(table, id, params) {
   if (params.id) delete params.id;
   const assigns = Object.keys(params);
-  const values = assigns.map((key) => `${key}=${normalizeValue(params[key])}`).join(', '); // eslint-disable-line
-  return query(`UPDATE ${table} SET ${values} WHERE id=${id} RETURNING *`);
+  const values = assigns.map((key) => params[key]);
+  const setClause = assigns.map((key, i) => `${key}=$${i + 1}`).join(', ');
+  values.push(id);
+  return query(`UPDATE ${table} SET ${setClause} WHERE id=$${values.length} RETURNING *`, values);
 }
 
 function deleteById(table, id) {
-  return query(`DELETE FROM ${table} WHERE id = ${id}`);
+  return query(`DELETE FROM ${table} WHERE id = $1`, [id]);
 }
 
 export default {all, clear, create, deleteById, getById, update};
