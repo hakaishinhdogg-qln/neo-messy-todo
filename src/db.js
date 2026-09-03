@@ -2,11 +2,11 @@ import pg from 'pg';
 
 var conString = process.env.DATABASE_URL;
 
-function query(qs) {
+function query(qs, values) {
   return new Promise((resolve, reject) => (
     pg.connect(conString, (err, client, done) => {
       if (err) return reject(new Error(err));
-      client.query(qs, (err, result) => {
+      client.query(qs, values, (err, result) => {
         if (err) {
           done();
           return reject(new Error(err));
