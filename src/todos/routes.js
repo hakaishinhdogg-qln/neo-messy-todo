@@ -20,17 +20,22 @@ export default function ()  {
     .delete(deleteTodo, returnResponse);
 
   async function getAllTodos(req, res, next) {
-    res.locals.todos = await db.all(todoTable)
-    .catch((err) => next(err));
-    next();
+    try {
+      res.locals.todos = await db.all(todoTable);
+      next();
+    } catch (err) {
+      next(err);
+    }
   }
 
   async function clearTodos(req, res, next) {
-    const rows = await db.clear(todoTable)
-    .catch((err) => next(err));
-    res.locals.todos = rows;
-    res.status(204);
-    next();
+    try {
+      res.locals.todos = await db.clear(todoTable);
+      res.status(204);
+      next();
+    } catch (err) {
+      next(err);
+    }
   }
 
   async function createTodo(req, res, next) {
@@ -38,41 +43,53 @@ export default function ()  {
       req.body.position = req.body.order;
       delete req.body.order;
     }
-    const todo = await db.create(todoTable, req.body)
-    .catch((err) => next(err));
-    res.locals.todo = todo[0];
-    res.status(201);
-    next();
+    try {
+      const todo = await db.create(todoTable, req.body);
+      res.locals.todo = todo[0];
+      res.status(201);
+      next();
+    } catch (err) {
+      next(err);
+    }
   }
 
   async function getOneTodo(req, res, next) {
-    const todo = await db.getById('todos', req.params.id)
-    .catch((err) => next(err));
-    res.locals.todo = todo && todo[0];
-    if (!res.locals.todo) {
-      return next(new errors.NotFound('This todo does not exist'));
+    try {
+      const todo = await db.getById('todos', req.params.id);
+      res.locals.todo = todo && todo[0];
+      if (!res.locals.todo) {
+        return next(new errors.NotFound('This todo does not exist'));
+      }
+      next();
+    } catch (err) {
+      next(err);
     }
-    next();
   }
 
   async function patchTodo(req, res, next) {
-    const todo = Object.assign({}, res.locals.todo[0], req.body);
+    const todo = Object.assign({}, res.locals.todo, req.body);
     if (todo.order) {
       todo.position = todo.order;
       delete todo.order;
     }
 
-    const updatedTodo = await db.update(todoTable, req.params.id, todo)
-    .catch((err) => next(err));
-    res.locals.todo = updatedTodo[0];
-    next();
+    try {
+      const updatedTodo = await db.update(todoTable, req.params.id, todo);
+      res.locals.todo = updatedTodo[0];
+      next();
+    } catch (err) {
+      next(err);
+    }
   }
 
   async function deleteTodo(req, res, next) {
-    res.locals.todo = await db.deleteById(todoTable, req.params.id)
-    .catch((err) => next(err));
-    res.status(204);
-    next();
+    try {
+      res.locals.todo = await db.deleteById(todoTable, req.params.id);
+      res.status(204);
+      next();
+    } catch (err) {
+      next(err);
+    }
   }
 
   function returnResponse(req, res) {
