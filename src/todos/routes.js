@@ -56,7 +56,7 @@ export default function ()  {
   }
 
   async function patchTodo(req, res, next) {
-    const todo = Object.assign({}, res.locals.todo[0], req.body);
+    const todo = Object.assign({}, res.locals.todo, req.body);
     if (todo.order) {
       todo.position = todo.order;
       delete todo.order;
