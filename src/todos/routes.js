@@ -40,6 +40,7 @@ export default function ()  {
     }
     const todo = await db.create(todoTable, req.body)
     .catch((err) => next(err));
+    if (!todo) return;
     res.locals.todo = todo[0];
     res.status(201);
     next();
@@ -64,6 +65,7 @@ export default function ()  {
 
     const updatedTodo = await db.update(todoTable, req.params.id, todo)
     .catch((err) => next(err));
+    if (!updatedTodo) return;
     res.locals.todo = updatedTodo[0];
     next();
   }
